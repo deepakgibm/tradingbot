@@ -146,7 +146,27 @@ class TradingEngine:
         return {"status": "rejected", "reason": "Invalid action"}
     
     async def update_positions(self):
-        pass
+        for symbol, position in list(self.positions.items()):
+            current_data = market_sim.get_current_price(symbol)
+            current_price = current_data['price']
+            position.update_price(current_price)
+            
+            await db.update_position(
+                symbol,
+                position.quantity,
+                position.entry_price,
+                current_price,
+                position.pnl,
+                position.stop_loss,
+                position.take_profit
+            )
+            
+            if current_price <= position.stop_loss:
+                await self.execute_trade(symbol, "SELL", {"reason": "Stop loss hit"})
+                continue
+            elif current_price >= position.take_profit:
+                await self.execute_trade(symbol, "SELL", {"reason": "Take profit hit"})
+                continue
     
     def get_portfolio_summary(self) -> Dict[str, Any]:
         return {}
