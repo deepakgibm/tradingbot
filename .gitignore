@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+env/
+ENV/
+trading_bot_env/
+
+# Machine Learning Models
+*.h5
+*.pkl
+*.joblib
+scaler.pkl
+lstm_model.h5
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+trading_bot.db
+
+# Node
+client/node_modules/
+client/dist/
+client/.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+/tmp/
+
+# Environment
+.env
+.env.local
+access_token.txt
