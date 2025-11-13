@@ -217,8 +217,10 @@ class TradingEngine:
             
             if current_price <= position.stop_loss:
                 await self.execute_trade(symbol, "SELL", {"reason": "Stop loss hit"})
+                continue
             elif current_price >= position.take_profit:
                 await self.execute_trade(symbol, "SELL", {"reason": "Take profit hit"})
+                continue
     
     def get_portfolio_summary(self) -> Dict[str, Any]:
         total_position_value = sum(
