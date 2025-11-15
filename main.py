@@ -1,29 +1,32 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import asyncio
-import json
-import logging
+import structlog
 from typing import List, Dict, Any
 from contextlib import asynccontextmanager
+from fastapi.security import OAuth2PasswordRequestForm
 
 from config import config, TradingConfig
 from database import db
 from trading_engine import trading_engine
 from upstox_client import upstox_client_instance
 from ml_model import lstm_model
+from auth import create_access_token, get_current_user
+from logging_config import setup_logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+setup_logging()
+log = structlog.get_logger()
 
 active_connections: List[WebSocket] = []
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.init_db()
-    logging.info("Database initialized.")
+    log.info("Database initialized.")
     
     asyncio.create_task(initialize_model())
     asyncio.create_task(trading_loop())
@@ -31,9 +34,9 @@ async def lifespan(app: FastAPI):
     yield
 
 async def initialize_model():
-    logging.info("Initializing LSTM model...")
+    log.info("Initializing LSTM model...")
     await asyncio.to_thread(lstm_model.create_pretrained_model)
-    logging.info("LSTM model initialized.")
+    log.info("LSTM model initialized.")
 
 app = FastAPI(title="Upstox Trading Bot", lifespan=lifespan)
 
@@ -47,7 +50,7 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
-    logging.error(f"Unhandled exception: {exc}", exc_info=True)
+    log.error("Unhandled exception", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={"message": "An unexpected error occurred."}
@@ -70,7 +73,7 @@ async def broadcast_message(message: Dict[str, Any]):
 async def trading_loop():
     while True:
         if trading_engine.is_running:
-            logging.info("Trading loop is running...")
+            log.info("Trading loop is running...")
             # This will need to be updated with a list of instruments from Upstox
             symbols = []
             
@@ -101,19 +104,28 @@ async def trading_loop():
                                 result
                             )
                 except Exception as e:
-                    logging.error(f"Error analyzing {symbol}: {e}", exc_info=True)
+                    log.error("Error analyzing symbol", symbol=symbol, error=e, exc_info=True)
                     await db.add_log("ERROR", f"Error analyzing {symbol}: {str(e)}")
         
         await asyncio.sleep(5)
+
+@app.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    # In a real application, you would verify the username and password against a database
+    if form_data.username == "test" and form_data.password == "test":
+        access_token = create_access_token(data={"sub": form_data.username})
+        return {"access_token": access_token, "token_type": "bearer"}
+    return JSONResponse(status_code=400, content={"message": "Incorrect username or password"})
+
 
 @app.get("/auth/login")
 async def login():
     try:
         login_url = upstox_client_instance.get_login_url()
-        logging.info("Redirecting to Upstox for authentication.")
+        log.info("Redirecting to Upstox for authentication.")
         return RedirectResponse(url=login_url)
     except Exception as e:
-        logging.error(f"Failed to get login URL: {e}", exc_info=True)
+        log.error("Failed to get login URL", error=e, exc_info=True)
         return {"status": "error", "message": "Failed to initiate login."}
 
 @app.get("/auth/callback")
@@ -121,13 +133,13 @@ async def auth_callback(code: str):
     try:
         response = upstox_client_instance.handle_auth_callback(code)
         if response['status'] == 'success':
-            logging.info("Successfully authenticated with Upstox.")
+            log.info("Successfully authenticated with Upstox.")
             return {"status": "success", "message": "Authentication successful!"}
         else:
-            logging.error(f"Upstox authentication failed: {response.get('message')}")
+            log.error("Upstox authentication failed", message=response.get('message'))
             return {"status": "error", "message": "Authentication failed."}
     except Exception as e:
-        logging.error(f"Authentication callback error: {e}", exc_info=True)
+        log.error("Authentication callback error", error=e, exc_info=True)
         return {"status": "error", "message": "Authentication failed."}
 
 @app.get("/")
@@ -135,29 +147,44 @@ async def root():
     return {"status": "Trading Bot API is running"}
 
 @app.get("/api/portfolio")
-async def get_portfolio():
+async def get_portfolio(current_user: str = Depends(get_current_user)):
     portfolio = trading_engine.get_portfolio_summary()
     return portfolio
 
 @app.post("/api/bot/start")
-async def start_bot():
+async def start_bot(current_user: str = Depends(get_current_user)):
     trading_engine.is_running = True
-    logging.info("Trading bot started.")
+    log.info("Trading bot started.")
     await db.add_log("INFO", "Trading bot started")
     return {"status": "started", "is_running": True}
 
 @app.post("/api/bot/stop")
-async def stop_bot():
+async def stop_bot(current_user: str = Depends(get_current_user)):
     trading_engine.is_running = False
-    logging.info("Trading bot stopped.")
+    log.info("Trading bot stopped.")
     await db.add_log("INFO", "Trading bot stopped")
     return {"status": "stopped", "is_running": False}
 
 @app.get("/api/bot/status")
-async def get_bot_status():
+async def get_bot_status(current_user: str = Depends(get_current_user)):
     return {
         "is_running": trading_engine.is_running,
     }
+
+@app.get("/api/historical-data/{instrument_key}")
+async def get_historical_data(instrument_key: str, current_user: str = Depends(get_current_user)):
+    today = date.today()
+    from_date = today.replace(day=today.day - 7).strftime('%Y-%m-%d')
+    to_date = today.strftime('%Y-%m-%d')
+
+    historical_data = upstox_client_instance.get_historical_candle_data(
+        instrument_key, '1minute', to_date, from_date
+    )
+
+    if historical_data['status'] != 'success' or not historical_data['data'].payload.candles:
+        return {"error": "Could not fetch historical data"}
+
+    return historical_data['data'].payload.candles
 
 if __name__ == "__main__":
     import uvicorn
