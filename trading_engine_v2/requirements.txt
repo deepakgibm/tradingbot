@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+requests
+pandas
+lightgbm
+scikit-learn
+python-dotenv
+redis
+psycopg2-binary
