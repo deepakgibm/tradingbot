@@ -98,3 +98,14 @@ Then, with both the backend and frontend servers running, you can run the tests 
 ```bash
 pytest
 ```
+
+## 4. Running with GPU Acceleration
+
+To run the application with GPU acceleration, you will need to have a compatible NVIDIA GPU and the NVIDIA Container Toolkit installed.
+
+Once you have the prerequisites installed, you can build and run the application with the `Dockerfile.gpu` using the following commands:
+
+```bash
+docker build -t trading-engine-gpu -f trading_engine_v2/Dockerfile.gpu .
+docker run -p 8000:8000 --gpus all trading-engine-gpu
+```

@@ -171,6 +171,21 @@ async def get_bot_status(current_user: str = Depends(get_current_user)):
         "is_running": trading_engine.is_running,
     }
 
+@app.get("/api/historical-data/{instrument_key}")
+async def get_historical_data(instrument_key: str, current_user: str = Depends(get_current_user)):
+    today = date.today()
+    from_date = today.replace(day=today.day - 7).strftime('%Y-%m-%d')
+    to_date = today.strftime('%Y-%m-%d')
+
+    historical_data = upstox_client_instance.get_historical_candle_data(
+        instrument_key, '1minute', to_date, from_date
+    )
+
+    if historical_data['status'] != 'success' or not historical_data['data'].payload.candles:
+        return {"error": "Could not fetch historical data"}
+
+    return historical_data['data'].payload.candles
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
