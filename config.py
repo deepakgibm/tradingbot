@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 from typing import List
 
-class TradingConfig(BaseModel):
+class TradingConfig(BaseSettings):
     capital: float = 200000.0
     max_risk_per_trade: float = 0.01
     max_positions: int = 5
@@ -21,5 +21,8 @@ class TradingConfig(BaseModel):
     
     simulation_mode: bool = True
     auto_square_off_time: str = "15:15"
+
+    class Config:
+        env_file = ".env"
 
 config = TradingConfig()
