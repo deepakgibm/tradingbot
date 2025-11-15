@@ -1,0 +1,23 @@
+.trading-control-page .control-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.trading-control-page .control-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.trading-control-page .status-indicator {
+  font-weight: bold;
+}
+
+.trading-control-page .status-running {
+  color: green;
+}
+
+.trading-control-page .status-stopped {
+  color: red;
+}
