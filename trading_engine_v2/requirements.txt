@@ -8,4 +8,3 @@ scikit-learn
 python-dotenv
 redis
 psycopg2-binary
-gunicorn
