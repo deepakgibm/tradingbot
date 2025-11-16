@@ -13,38 +13,9 @@ class UpstoxClient:
         self.api_key = os.getenv("UPSTOX_API_KEY")
         self.api_secret = os.getenv("UPSTOX_API_SECRET")
         self.redirect_uri = os.getenv("UPSTOX_REDIRECT_URI")
+        self.access_token = os.getenv("UPSTOX_ACCESS_TOKEN")
         self.api_client = None
-        self.access_token = None
-
-    def get_login_url(self):
-        logging.info("Generating Upstox login URL.")
-        api_instance = upstox_client.LoginApi()
-        response = api_instance.authorize(
-            self.api_key,
-            self.redirect_uri,
-            "v2"
-        )
-        return response
-
-    def handle_auth_callback(self, code: str):
-        logging.info("Handling Upstox auth callback.")
-        api_instance = upstox_client.LoginApi()
-        try:
-            api_response = api_instance.token(
-                api_version="v2",
-                client_id=self.api_key,
-                client_secret=self.api_secret,
-                code=code,
-                grant_type="authorization_code",
-                redirect_uri=self.redirect_uri
-            )
-            self.access_token = api_response.access_token
-            self._configure_api_client()
-            logging.info("Successfully obtained Upstox access token.")
-            return {"status": "success", "access_token": self.access_token}
-        except ApiException as e:
-            logging.error(f"Upstox API exception during auth callback: {e}")
-            return {"status": "error", "message": str(e)}
+        self._configure_api_client()
 
     def _configure_api_client(self):
         logging.info("Configuring Upstox API client.")

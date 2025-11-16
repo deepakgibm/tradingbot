@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from config import config, TradingConfig
 from database import db
 from trading_engine import trading_engine
-from upstox_client import upstox_client_instance
+from upstox_api_client import upstox_client_instance
 from ml_model import lstm_model
 from auth import create_access_token, get_current_user
 from logging_config import setup_logging
