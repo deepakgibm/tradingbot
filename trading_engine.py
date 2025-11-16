@@ -5,10 +5,12 @@ from datetime import datetime, date
 from config import config
 from technical_indicators import TechnicalIndicators
 from ml_model import lstm_model
-from upstox_api_client import upstox_client_instance
+from trading_engine_v2.upstox_client import UpstoxClient
 from database import db
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+upstox_client_instance = UpstoxClient()
 
 class Position:
     def __init__(self, symbol: str, quantity: int, entry_price: float, stop_loss: float, take_profit: float):

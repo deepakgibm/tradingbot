@@ -102,14 +102,3 @@ class UpstoxClient:
         """
         logging.info(f"Getting status for order {order_id}")
         return {"status": "completed", "order_id": order_id}
-
-    def get_live_feed(self, instrument_key: str) -> Dict[str, Any]:
-        """
-        Fetches the live feed for a given instrument.
-        """
-        logging.info(f"Fetching live feed for {instrument_key}.")
-        params = {
-            "instrument_key": instrument_key,
-            "type": "full"
-        }
-        return self._request("GET", "/market-quote", params=params)
