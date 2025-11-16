@@ -7,8 +7,11 @@ class FeatureStore:
     Designed to update incrementally as new data streams in.
     """
 
-    def __init__(self, symbols: List[str]):
-        self.features: Dict[str, pd.DataFrame] = {symbol: pd.DataFrame() for symbol in symbols}
+    def __init__(self, symbols: List[str], timeframes: List[str] = ['1min']):
+        self.features: Dict[str, Dict[str, pd.DataFrame]] = {
+            symbol: {tf: pd.DataFrame() for tf in timeframes} for symbol in symbols
+        }
+        self.timeframes = timeframes
 
     def add_candle(self, candle: Dict[str, Any]):
         """
@@ -16,17 +19,39 @@ class FeatureStore:
         """
         symbol = candle["symbol"]
         if symbol not in self.features:
-            self.features[symbol] = pd.DataFrame()
+            self.features[symbol] = {tf: pd.DataFrame() for tf in self.timeframes}
 
         new_candle_df = pd.DataFrame([candle])
-        self.features[symbol] = pd.concat([self.features[symbol], new_candle_df], ignore_index=True)
-        self._calculate_features(symbol)
+        new_candle_df['timestamp'] = pd.to_datetime(new_candle_df['ts'], unit='s')
+        new_candle_df.set_index('timestamp', inplace=True)
 
-    def _calculate_features(self, symbol: str):
+        base_tf = self.timeframes[0]
+        self.features[symbol][base_tf] = pd.concat([self.features[symbol][base_tf], new_candle_df])
+
+        for tf in self.timeframes:
+            self._resample_and_calculate(symbol, base_tf, tf)
+
+    def _resample_and_calculate(self, symbol: str, base_tf: str, target_tf: str):
         """
-        Calculates all the features for a given symbol.
+        Resamples the base timeframe data to the target timeframe and calculates features.
         """
-        df = self.features[symbol]
+        base_df = self.features[symbol][base_tf]
+        resampled_df = base_df.resample(target_tf).agg({
+            'open': 'first',
+            'high': 'max',
+            'low': 'min',
+            'close': 'last',
+            'volume': 'sum'
+        }).dropna()
+
+        self.features[symbol][target_tf] = resampled_df
+        self._calculate_features(symbol, target_tf)
+
+    def _calculate_features(self, symbol: str, timeframe: str):
+        """
+        Calculates all the features for a given symbol and timeframe.
+        """
+        df = self.features[symbol][timeframe]
         if df.empty:
             return
 
@@ -53,19 +78,19 @@ class FeatureStore:
         # Volume Weighted Average Price (VWAP)
         df["vwap"] = (df["volume"] * (df["high"] + df["low"]) / 2).cumsum() / df["volume"].cumsum()
 
-        self.features[symbol] = df
+        self.features[symbol][timeframe] = df
 
-    def get_features(self, symbol: str) -> pd.DataFrame:
+    def get_features(self, symbol: str, timeframe: str) -> pd.DataFrame:
         """
-        Returns the DataFrame with all the features for a given symbol.
+        Returns the DataFrame with all the features for a given symbol and timeframe.
         """
-        return self.features.get(symbol, pd.DataFrame())
+        return self.features.get(symbol, {}).get(timeframe, pd.DataFrame())
 
-    def get_latest_features(self, symbol: str) -> Dict[str, Any]:
+    def get_latest_features(self, symbol: str, timeframe: str) -> Dict[str, Any]:
         """
-        Returns the latest features for a given symbol.
+        Returns the latest features for a given symbol and timeframe.
         """
-        df = self.get_features(symbol)
+        df = self.get_features(symbol, timeframe)
         if not df.empty:
             return df.iloc[-1].to_dict()
         return {}

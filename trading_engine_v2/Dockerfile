@@ -16,5 +16,5 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "trading_engine_v2.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application with Gunicorn
+CMD ["gunicorn", "-c", "gunicorn_conf.py", "trading_engine_v2.api.main:app"]
