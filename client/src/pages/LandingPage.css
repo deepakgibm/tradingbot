@@ -1,0 +1,59 @@
+.landing-page {
+  font-family: Arial, sans-serif;
+}
+
+.hero-section {
+  text-align: center;
+  padding: 100px 20px;
+  background-color: #f8f9fa;
+}
+
+.hero-section h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.features-section,
+.pricing-section,
+.testimonials-section {
+  padding: 60px 20px;
+}
+
+.features-grid,
+.pricing-grid,
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.author {
+  font-style: italic;
+  text-align: right;
+}
+
+.footer-section {
+  background-color: #343a40;
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.footer-links {
+  margin-bottom: 20px;
+}
+
+.footer-links a {
+  color: white;
+  margin: 0 10px;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}

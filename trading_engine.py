@@ -5,7 +5,7 @@ from datetime import datetime, date
 from config import config
 from technical_indicators import TechnicalIndicators
 from ml_model import lstm_model
-from upstox_client import upstox_client_instance
+from upstox_api_client import upstox_client_instance
 from database import db
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -52,15 +52,15 @@ class TradingEngine:
         from_date = today.replace(day=today.day - 7).strftime('%Y-%m-%d')
         to_date = today.strftime('%Y-%m-%d')
 
-        historical_data = upstox_client_instance.get_historical_candle_data(
+        historical_data = upstox_client_instance.fetch_historical(
             instrument_key, '1minute', to_date, from_date
         )
 
-        if historical_data['status'] != 'success' or not historical_data['data'].payload.candles:
+        if not historical_data or not historical_data.get('data', {}).get('candles'):
             logging.warning(f"Insufficient data for {symbol}")
             return {"action": "HOLD", "reason": "Insufficient data"}
 
-        candles = historical_data['data'].payload.candles
+        candles = historical_data['data']['candles']
         df = pd.DataFrame(candles, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'oi'])
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df.set_index('timestamp', inplace=True)
@@ -97,8 +97,12 @@ class TradingEngine:
     
     async def execute_trade(self, symbol: str, instrument_key: str, action: str, signals: Dict[str, Any]) -> Dict[str, Any]:
         logging.info(f"Executing {action} trade for {symbol} ({instrument_key})")
-        # Fetch current price from Upstox - Placeholder
-        current_price = 100.0
+        live_feed = upstox_client_instance.get_live_feed(instrument_key)
+
+        if not live_feed:
+            return {"status": "rejected", "reason": "Could not fetch live feed"}
+
+        current_price = live_feed['data']['last_price']
 
         if action == "BUY":
             position_value = self.capital * config.position_size_percent
@@ -147,8 +151,12 @@ class TradingEngine:
     
     async def update_positions(self):
         for symbol, position in list(self.positions.items()):
-            current_data = market_sim.get_current_price(symbol)
-            current_price = current_data['price']
+            live_feed = upstox_client_instance.get_live_feed(position.symbol)
+
+            if not live_feed:
+                continue
+
+            current_price = live_feed['data']['last_price']
             position.update_price(current_price)
             
             await db.update_position(

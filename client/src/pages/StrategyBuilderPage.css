@@ -1,0 +1,22 @@
+.strategy-builder-page .tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.strategy-builder-page .tabs button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+.strategy-builder-page .tabs button.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.strategy-builder-page .code-textarea {
+  width: 100%;
+  height: 400px;
+  font-family: monospace;
+}
