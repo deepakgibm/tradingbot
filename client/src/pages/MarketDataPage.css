@@ -1,0 +1,14 @@
+.market-data-page {
+  display: flex;
+}
+
+.filters-sidebar {
+  width: 200px;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.chart-container {
+  flex-grow: 1;
+  padding: 20px;
+}

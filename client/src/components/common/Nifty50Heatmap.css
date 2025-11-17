@@ -1,0 +1,16 @@
+.nifty50-heatmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 5px;
+}
+
+.heatmap-cell {
+  padding: 10px;
+  border-radius: 5px;
+  color: white;
+  text-align: center;
+}
+
+.symbol {
+  font-weight: bold;
+}
