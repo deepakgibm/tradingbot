@@ -10,6 +10,8 @@ from database import db
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+upstox_client_instance = UpstoxClient()
+
 class Position:
     def __init__(self, symbol: str, quantity: int, entry_price: float, stop_loss: float, take_profit: float):
         self.symbol = symbol
