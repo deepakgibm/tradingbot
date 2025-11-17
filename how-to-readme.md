@@ -109,3 +109,13 @@ Once you have the prerequisites installed, you can build and run the application
 docker build -t trading-engine-gpu -f trading_engine_v2/Dockerfile.gpu .
 docker run -p 8000:8000 --gpus all trading-engine-gpu
 ```
+
+## 5. One-Step Setup with PowerShell
+
+For a simplified setup, you can use the `start-trading-engine.ps1` PowerShell script. This script will automate the process of building and running the entire application with Docker.
+
+To run the script, open a PowerShell terminal and execute the following command:
+
+```powershell
+./start-trading-engine.ps1
+```
