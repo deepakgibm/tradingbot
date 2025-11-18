@@ -6,7 +6,7 @@ def risk_manager():
     return RiskManager(capital=100000.0)
 
 def test_size_position(risk_manager):
-    size = risk_manager.size_position(entry_price=100, stop_loss_price=90)
+    size = risk_manager.size_position(entry_price=100, stop_loss_price=90, symbol="NSE:INFY")
     assert size == 100
 
 def test_check_exposure(risk_manager):
