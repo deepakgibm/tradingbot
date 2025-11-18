@@ -16,7 +16,7 @@ A full-stack trading bot application that combines LSTM neural networks with tec
 ## Tech Stack
 
 ### Backend
-- FastAPI (Python 3.11)
+- FastAPI (Python 3.13)
 - TensorFlow/Keras for LSTM model
 - pandas + numpy for data processing
 - SQLite for data persistence

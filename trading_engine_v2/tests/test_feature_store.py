@@ -7,6 +7,8 @@ import time
 def feature_store():
     return FeatureStore(symbols=["NSE:INFY"])
 
+import time
+
 def test_add_candle(feature_store):
     candle = {"symbol": "NSE:INFY", "ts": int(time.time()), "open": 1495.0, "close": 1500.0, "high": 1510.0, "low": 1490.0, "volume": 1000}
     feature_store.add_candle(candle)
