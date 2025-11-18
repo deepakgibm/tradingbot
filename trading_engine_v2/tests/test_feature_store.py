@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
 from trading_engine_v2.feature_store import FeatureStore
+import time
 
 @pytest.fixture
 def feature_store():
